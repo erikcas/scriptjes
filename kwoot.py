@@ -22,7 +22,7 @@ auth.set_access_token(access_token, access_token_secret)
 api = tweepy.API(auth)
 
 # Tweets opening text
-quotetext = "Quote everyday!\n\n"
+quotetext = "Quote everyday!\n\n#wnw\n\n"
 
 # Read, add and tweet the quotes:
 kwoots = open("kwoots.txt")
