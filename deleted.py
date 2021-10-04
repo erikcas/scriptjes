@@ -2,6 +2,7 @@ import json
 import tweepy
 from tweepy import Stream
 from tweepy import StreamListener
+from post import post_deleted_tweet
 
 # Get the twitter credentials from a (hidden) file
 secrets = open(".login")
@@ -38,11 +39,15 @@ class CassieListener(StreamListener):
                 text_file.close()
                 
             if 'delete' in data:
-                print(' Ah een gedelete tweet jongens')
-                text_file = open(json_data['id_str']+'_deleted_Kaffie.json', 'a')
-                #json.dump(data, text_file, indent=4)
-                text_file.write(data)
-                text_file.close()
+                if json_data['delete']['status']['user_id'] == '1347228691819077632':
+                    print(' Ah een gedelete tweet jongens')
+                    text_file = open(json_data['delete']['status']['id_str']+'_deleted_Kaffie.json', 'a')
+                    #json.dump(data, text_file, indent=4)
+                    text_file.write(data)
+                    text_file.close()
+                    # Post de tweet naar een wordpress
+                    tweet_id = json_data['delete']['status']['id_str']
+                    post_deleted_tweet(tweet_id)
         except KeyError:
             print("Oh jee, een error. We skippen deze")
             
