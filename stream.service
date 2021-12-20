@@ -1,0 +1,15 @@
+[Unit]
+RequiresMountsFor=/home
+Description=Twitter Streamer
+After=network.target
+
+[Service]
+# Set WorkingDirectory and ExecStart to your file paths accordingly
+# NOTE: %h will be resolved to /home/<username>
+#User=<username>
+WorkingDirectory=%h/tweets
+ExecStart=/home/<username>/tweets/deleted.py
+Restart=on-failure
+
+[Install]
+WantedBy=default.target
