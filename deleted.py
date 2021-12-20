@@ -5,7 +5,7 @@ import tweepy
 import sys
 from tweepy import Stream
 from tweepy import StreamListener
-from post import post_deleted_tweet
+#from post import post_deleted_tweet
 from tweeps import tweeps
 from urllib3.exceptions import ProtocolError
 import logging
@@ -75,7 +75,7 @@ class UserListener(StreamListener):
                 tweet_id = json_data['delete']['status']['id_str']
                 timestamp = json_data['delete']['timestamp_ms']
                 logging.debug(f"[SCRIPT]: tweet_id: {tweet_id} || timestamp: {timestamp}")
-                post_deleted_tweet(tweet_id, timestamp)
+                #post_deleted_tweet(tweet_id, timestamp)
 
         except KeyError as error:
             logging.debug(f"[SCRIPT]: Och nee toch, een error. We skippen deze. We zochten tweet {tweet_id}. Fout:\n{error}")
