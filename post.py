@@ -2,11 +2,19 @@ import json
 import requests
 import base64
 import sys
+import time
+import logging
+from fnmatch import fnmatch
+from os import listdir
+from read_it import convert_readable
 
-log = open('log_post.log', 'a')
-sys.stdout = log
+logging.basicConfig(filename='log_deleted.log',
+        filemode = 'w',
+        format='%(asctime)s %(levelname)-8s %(message)s',
+        datefmt='%d-%m-%Y %H:%M:%S',
+        level=logging.DEBUG)
 
-def post_deleted_tweet(tweet_id):
+def post_deleted_tweet(tweet_id, timestamp):
     secrets = open(".wp-login")
     login = secrets.readlines()
     user = login[0].rstrip('\n')
@@ -14,48 +22,74 @@ def post_deleted_tweet(tweet_id):
 
     credentials = user + ':' + passwd
 
-    url = "https://kafka.dev/wp-json/wp/v2/posts"
+    url = "https://<wordpress-url>/wp-json/wp/v2/posts"
     token = base64.b64encode(credentials.encode())
     header = {'Authorization': 'Basic ' + token.decode('utf-8')}
 
-    filename = (tweet_id + '_Kaffie.json')
+    filename = 'tbd'
+    tmpfile = '*' + str(tweet_id) +'.json'
+    for file in listdir("."):
+        if fnmatch(file, tmpfile):
+            filename = file
     
     # Posten is waar
     posten = True
+    timestamp = int(timestamp) / 1000
+    datetime = time.strftime('%d-%m-%Y om %H:%M:%S', time.localtime(timestamp))
     #Open de json file met de tweet
-    print(f'Open {filename} en lees de inhoud')
+    logging.debug(f'[SCRIPT]: Open {filename} en lees de inhoud')
     try:
         with open(filename) as f:
             tweet_data = json.load(f)
     except FileNotFoundError:
-        print('Deze tweet kennen we niet helaas')
+        logging.debug('[SCRIPT]: Deze tweet kennen we niet helaas')
         posten = False
 
     # Alleen posten als posten waar is
     if posten == True:
         # Gegevens om te posten
-       # Tijdstip van de post
-        tijdstip = tweet_data['created_at']
+        # Tijdstip van de post
+        tijdstip = tweet_data['timestamp_ms']
+        tijdstip = int(tijdstip) / 1000
+        tijdstip = time.strftime('%d-%m-%Y om %H:%M:%S', time.localtime(tijdstip))
         # Volle naam beschreven
         naam = tweet_data['user']['name']
         # (Huidige) schermnaam
         scherm_naam = tweet_data['user']['screen_name']
+        # Avatar
+        avatar = tweet_data['user']['profile_image_url']
         # Vorige 2 samen, staat leuk voor in de post
-        gegevens = f'{naam} || schermnaam @{scherm_naam}'
+        gegevens = f'{naam} @{scherm_naam}'
         #Volledige tweet text
-        if 'extended_tweet' in tweet_data:
+        tweettext = 'initieel'
+        try:
             tweettext = tweet_data['extended_tweet']['full_text']
-        elif tweet_data['retweeted_status']['truncated'] == True:
+        except KeyError:
+            logging.debug('[SCRIPT]: Oeps')
+        try:
             tweettext = tweet_data['retweeted_status']['extended_tweet']['full_text']
-        else:
+        except KeyError:
+            logging.debug('[SCRIPT]: Oeps')
+        try:
+            tweettext = tweet_data['user']['retweeted_status']['extended_tweet']['full_text']
+        except KeyError:
+            logging.debug('[SCRIPT]: Oeps')
+        if tweettext == 'initieel':
             tweettext = tweet_data['text']
+        # Even de metadata ophalen
+        convert_readable(filename)
+        with open('temp.json') as f:
+            jsontext = f.read()
         # Te posten tekst
-        tweet_text = f'Oorspronkelijk getweet op {tijdstip} (LET OP! UTC tijd)\nGetweet door {gegevens}\n\n{tweettext}'
+        #tweet_text = f'Oorspronkelijk getweet op {tijdstip} (LET OP! UTC tijd)\nGetweet door {gegevens}\n\n{tweettext}'
+        tweet_text = f'<p>Onderstaande tweet op {datetime} door @{scherm_naam} verwijderd:\n\n<img src={avatar}><strong>{gegevens}</strong>\n{tweettext}\n \
+                <span style="font-size: 8pt;">Oorspronkelijk gepost op {tijdstip}.</span>\n \
+                <!--more Klik hier voor metadata--></p><p>\n\nMetadata:\n<code><pre>{jsontext}</pre></code></p>'
         # Titel van de post
         titel = f'Alert! {scherm_naam} deleted tweet met id {tweet_id}'
         # Nog wat relevante gegegens voor wordpress
         status = 'publish'
-        categorie = 62
+        categorie = 2
         # De daadwerkelijke post
         post = {
                 'title' : titel,
@@ -65,4 +99,3 @@ def post_deleted_tweet(tweet_id):
         }
 
         antwoord = requests.post(url , headers=header, json=post)
-        print(antwoord)

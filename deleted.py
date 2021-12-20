@@ -1,14 +1,22 @@
+#!/usr/local/bin/python3.10
+
 import json
 import tweepy
 import sys
 from tweepy import Stream
 from tweepy import StreamListener
 from post import post_deleted_tweet
+from tweeps import tweeps
+from urllib3.exceptions import ProtocolError
+import logging
 
-log = open('log_deleted.log', 'a')
-sys.stdout = log
+logging.basicConfig(filename='log_deleted.log', 
+        filemode = 'a',
+        format='%(asctime)s %(levelname)-8s %(message)s',
+        datefmt='%d-%m-%Y %H:%M:%S',
+        level=logging.DEBUG)
 
-print('Let the game begin')
+logging.info('[SCRIPT]: Let the game begin')
 # Get the twitter credentials from a (hidden) file
 secrets = open(".login")
 login = secrets.readlines()
@@ -29,39 +37,58 @@ auth.set_access_token(access_token, access_token_secret)
 # calling the api
 api = tweepy.API(auth)
 
-class DeletedListener(StreamListener):
+twitteraars = tweeps()
+
+class UserListener(StreamListener):
     
     def on_data(self, data):
             
         json_data = json.loads(data)
         
-        #Filter alleen de tweets door Kaffie eruit
+        #Filter alleen de tweets door User eruit
         try:
-            if json_data['user']['id_str'] == '1347228691819077632':
-                print('Voila, een tweet van onze praatzanger?')
-                text_file = open(json_data['id_str']+'_Kaffie.json', 'a')
-                #json.dump(data, text_file, indent=4)
+            if json_data['user']['id_str'] in twitteraars:
+                twitteraar = json_data['user']['id_str']
+                scherm_naam = json_data['user']['screen_name']
+                logging.debug(f'[SCRIPT]: Voila, een tweet van onze vriend {scherm_naam}?')
+                file_prefix = f'{scherm_naam}_'
+                text_id = json_data['id_str']
+                text_file = open(file_prefix + json_data['id_str'] + '.json', 'w')
                 text_file.write(data)
                 text_file.close()
         except KeyError:
-            print('Misschien een deleted tweet?')
+            logging.debug('[SCRIPT]: Misschien een deleted tweet?')
 
-        try:
+        try:        
             if 'delete' in data:
-                print(' Ah een gedelete tweet jongens')
-                text_file = open(json_data['delete']['status']['id_str']+'_deleted_Kaffie.json', 'a')
-                #json.dump(data, text_file, indent=4)
+                logging.debug('[SCRIPT]: Ah een gedelete tweet jongens')
+                twitteraar = json_data['delete']['status']['user_id']
+                twitteraar = str(twitteraar)
+                logging.debug(f"[SCRIPT]: {twitteraar}")
+                filet = json_data['delete']['status']['id_str']+'_deleted.json'
+                logging.debug(f"[SCRIPT]: filenaam {filet}")
+                text_file = open(json_data['delete']['status']['id_str']+'_deleted.json', 'w')
                 text_file.write(data)
                 text_file.close()
                 # Post de tweet naar een wordpress
-                print('Posten maar')
+                logging.debug('[SCRIPT]: Posten maar')
                 tweet_id = json_data['delete']['status']['id_str']
-                post_deleted_tweet(tweet_id)
-        except KeyError:
-            print("Och nee toch, een error. We skippen deze")
+                timestamp = json_data['delete']['timestamp_ms']
+                logging.debug(f"[SCRIPT]: tweet_id: {tweet_id} || timestamp: {timestamp}")
+                post_deleted_tweet(tweet_id, timestamp)
+
+        except KeyError as error:
+            logging.debug(f"[SCRIPT]: Och nee toch, een error. We skippen deze. We zochten tweet {tweet_id}. Fout:\n{error}")
             
         return True
 
-listener = DeletedListener()
+    def on_error(self, status):
+        print(status)
+
+listener = UserListener()
 twitterStream = Stream(auth, listener)
-twitterStream.filter(follow=['1347228691819077632'])
+while True:
+    try:
+        twitterStream.filter(follow=twitteraars)
+    except (ProtocolError, AttributeError):
+        continue
