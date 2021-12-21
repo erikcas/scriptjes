@@ -7,8 +7,8 @@ After=network.target
 # Set WorkingDirectory and ExecStart to your file paths accordingly
 # NOTE: %h will be resolved to /home/<username>
 #User=<username>
-WorkingDirectory=%h/tweets
-ExecStart=/home/<username>/tweets/deleted.py
+WorkingDirectory=%h/scriptjes
+ExecStart=/home/<username>/scriptjes/deleted.py
 Restart=on-failure
 
 [Install]
