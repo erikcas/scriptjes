@@ -57,6 +57,24 @@ Linux: Use screen application
 
 On ubuntu, I installed it as a user service:
 
+**IMPORTANT**
+
+Change line 1 of the file deleted.py to the proper python command in your environment!
+
+`#!<path_to_python3>`
+
+in ubuntu find it by the output of:
+
+`which python3`
+
+The output will for example be:
+
+`/usr/bin/python3`
+
+So for this expample, line 1 of deleted.py must be:
+
+`#!/usr/bin/python3`
+
 Open the file stream.service and change <username> to your username
 
 Enable lingering (else the service will not start automatically afer a reboot)
