@@ -8,6 +8,7 @@ from tweepy import StreamListener
 #from post import post_deleted_tweet
 from tweeps import tweeps
 from urllib3.exceptions import ProtocolError
+from capture import tweet_screenshot
 import logging
 
 logging.basicConfig(filename='log_deleted.log', 
@@ -56,6 +57,8 @@ class UserListener(StreamListener):
                 text_file = open(file_prefix + json_data['id_str'] + '.json', 'w')
                 text_file.write(data)
                 text_file.close()
+                # Maak een screenshot
+                tweet_screenshot(tweet_id, scherm_naam)
         except KeyError:
             logging.debug('[SCRIPT]: Misschien een deleted tweet?')
 
