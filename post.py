@@ -23,6 +23,7 @@ def post_deleted_tweet(tweet_id, timestamp):
     credentials = user + ':' + passwd
 
     url = "https://<wordpress-url>/wp-json/wp/v2/posts"
+    media_url = "https://<wordpress-url>/wp-json/wp/v2/media"
     token = base64.b64encode(credentials.encode())
     header = {'Authorization': 'Basic ' + token.decode('utf-8')}
 
@@ -31,7 +32,13 @@ def post_deleted_tweet(tweet_id, timestamp):
     for file in listdir("."):
         if fnmatch(file, tmpfile):
             filename = file
-    
+
+    png_name = 'tbd'
+    tmp_png = '*' + str(tweet_id) +'.json'
+    for file in listdir("."):
+        if fnmatch(file, tmp_png):
+            png_name = file
+
     # Posten is waar
     posten = True
     timestamp = int(timestamp) / 1000
@@ -44,6 +51,22 @@ def post_deleted_tweet(tweet_id, timestamp):
     except FileNotFoundError:
         logging.debug('[SCRIPT]: Deze tweet kennen we niet helaas')
         posten = False
+
+    logging.debug(f'[SCRIPT]: Open {png_name} en upload naar WP')
+    try:
+        post = {'file': open(png_name,'rb'), 'caption': png_name }
+        image = requests.request(
+                "POST",
+                media_url,
+                headers=header,
+                files=post)
+        resultaat = image.json()
+        guid = resultaat.get('guid')
+        image_url = guid.get('raw')
+
+    except FileNotFoundError:
+        logging.debug('[SCRIPT]: Geen screenshot gevonden')
+        image_url = ''
 
     # Alleen posten als posten waar is
     if posten == True:
@@ -82,8 +105,8 @@ def post_deleted_tweet(tweet_id, timestamp):
             jsontext = f.read()
         # Te posten tekst
         #tweet_text = f'Oorspronkelijk getweet op {tijdstip} (LET OP! UTC tijd)\nGetweet door {gegevens}\n\n{tweettext}'
-        tweet_text = f'<p>Onderstaande tweet op {datetime} door @{scherm_naam} verwijderd:\n\n<img src={avatar}><strong>{gegevens}</strong>\n{tweettext}\n \
-                <span style="font-size: 8pt;">Oorspronkelijk gepost op {tijdstip}.</span>\n \
+        tweet_text = f'<p>Onderstaande tweet op {datetime} door @{scherm_naam} verwijderd:\n\n<img src={avatar}><strong>{gegevens}</strong>\n<img scr=image_url>\n \
+                {tweettext}\n \<span style="font-size: 8pt;">Oorspronkelijk gepost op {tijdstip}.</span>\n \
                 <!--more Klik hier voor metadata--></p><p>\n\nMetadata:\n<code><pre>{jsontext}</pre></code></p>'
         # Titel van de post
         titel = f'Alert! {scherm_naam} deleted tweet met id {tweet_id}'
