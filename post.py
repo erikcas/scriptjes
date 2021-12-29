@@ -9,7 +9,7 @@ from os import listdir
 from read_it import convert_readable
 
 logging.basicConfig(filename='log_deleted.log',
-        filemode = 'w',
+        filemode = 'a',
         format='%(asctime)s %(levelname)-8s %(message)s',
         datefmt='%d-%m-%Y %H:%M:%S',
         level=logging.DEBUG)
@@ -34,8 +34,8 @@ def post_deleted_tweet(tweet_id, timestamp):
             filename = file
 
     png_name = 'tbd'
-    tmp_png = '*' + str(tweet_id) +'.json'
-    for file in listdir("."):
+    tmp_png = '*' + str(tweet_id) +'.png'
+    for file in listdir("./screenshots"):
         if fnmatch(file, tmp_png):
             png_name = file
 
