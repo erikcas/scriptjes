@@ -37,7 +37,7 @@ def post_deleted_tweet(tweet_id, timestamp):
     tmp_png = '*' + str(tweet_id) +'.png'
     for file in listdir("./screenshots"):
         if fnmatch(file, tmp_png):
-            png_name = file
+            png_name = f'screenshots/{file}'
 
     # Posten is waar
     posten = True
@@ -62,11 +62,11 @@ def post_deleted_tweet(tweet_id, timestamp):
                 files=post)
         resultaat = image.json()
         guid = resultaat.get('guid')
-        image_url = guid.get('raw')
-
+        image_url_raw = guid.get('raw')
+        image_url = f'<img src={image_url_raw}>'
     except FileNotFoundError:
         logging.debug('[SCRIPT]: Geen screenshot gevonden')
-        image_url = ''
+        image_url = '==>SCREENSHOT NOT AVAILABLE<=='
 
     # Alleen posten als posten waar is
     if posten == True:
@@ -105,8 +105,8 @@ def post_deleted_tweet(tweet_id, timestamp):
             jsontext = f.read()
         # Te posten tekst
         #tweet_text = f'Oorspronkelijk getweet op {tijdstip} (LET OP! UTC tijd)\nGetweet door {gegevens}\n\n{tweettext}'
-        tweet_text = f'<p>Onderstaande tweet op {datetime} door @{scherm_naam} verwijderd:\n\n<img src={avatar}><strong>{gegevens}</strong>\n<img scr=image_url>\n \
-                {tweettext}\n \<span style="font-size: 8pt;">Oorspronkelijk gepost op {tijdstip}.</span>\n \
+        tweet_text = f'<p>Onderstaande tweet op {datetime} door @{scherm_naam} verwijderd:\n\n<img src={avatar}><strong>{gegevens}</strong>\n{image_url}\n \
+                {tweettext}\n <span style="font-size: 8pt;">Oorspronkelijk gepost op {tijdstip}.</span>\n \
                 <!--more Klik hier voor metadata--></p><p>\n\nMetadata:\n<code><pre>{jsontext}</pre></code></p>'
         # Titel van de post
         titel = f'Alert! {scherm_naam} deleted tweet met id {tweet_id}'
