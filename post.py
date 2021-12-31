@@ -84,6 +84,17 @@ def post_deleted_tweet(tweet_id, timestamp):
         # Vorige 2 samen, staat leuk voor in de post
         gegevens = f'{naam} @{scherm_naam}'
         #Volledige tweet text
+        try:
+            if tweet_data['retweeted_status']:
+                image_url = '==>SCREENSHOT NOT AVAILABLE. REASON: WAS A RT<=='
+        except KeyError:
+            logging.debug('Oeps')
+        try:
+            if tweet_data['user']['retweeted_status']:
+                image_url = '==>SCREENSHOT NOT AVAILABLE. REASON: WAS A RT<=='
+        except KeyError:
+            logging.debug('Oeps')
+
         tweettext = 'initieel'
         try:
             tweettext = tweet_data['extended_tweet']['full_text']
