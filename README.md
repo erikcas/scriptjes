@@ -103,4 +103,4 @@ Check its status:
 
 (If the output is other then "Active: active (running) since"..... please check if you can find the issue in /var/log/syslog (on ubuntu that is) else let me know)
 
-
+For chromedriver: see https://skolo.online/documents/webscrapping/
